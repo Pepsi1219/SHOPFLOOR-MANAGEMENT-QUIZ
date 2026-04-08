@@ -31,7 +31,6 @@
     <div class="screen active" id="screen-loading">
       <div class="loading-center">
         <div class="loading-icon-wrap">
-          <span class="loading-emoji">🏭</span>
           <div class="loading-ring"></div>
         </div>
         <h1 class="loading-title">Shopfloor<br/><span>Management Quiz</span></h1>
@@ -47,8 +46,7 @@
       <!-- Top Bar -->
       <header class="top-bar">
         <div class="top-bar-inner">
-          <span class="app-logo">🏭</span>
-          <span class="app-name">Shopfloor Quiz</span>
+          <span class="app-name">Shopfloor Management Quiz</span>
           <div class="top-actions">
             <button class="icon-btn" id="btn-theme" title="สลับ Light/Dark mode" aria-label="Toggle Dark Mode">
               <span class="theme-icon">☀️</span>
@@ -61,23 +59,19 @@
       <main class="home-content">
         <!-- Hero Card -->
         <div class="hero-card glass-card">
-          <div class="hero-badge">
-            <span>📋</span> แบบทดสอบการจัดการหน้างาน
-          </div>
           <h2 class="hero-title">ทดสอบความรู้<br/><span class="gradient-text">Shopfloor Management</span></h2>
-          <p class="hero-desc">10 ข้อ • Multiple Choice • รับรองด้วยภาพถ่ายผลคะแนน</p>
         </div>
 
         <!-- Name Input -->
         <div class="name-section glass-card">
           <label class="input-label" for="input-name">
-            <span>👤</span> ชื่อ-นามสกุลผู้สอบ
+            <span>👤</span> ชื่อ-นามสกุล
           </label>
           <input
             type="text"
             id="input-name"
             class="name-input"
-            placeholder="กรอกชื่อของคุณ (ไม่บังคับ)"
+            placeholder="(ไม่บังคับ)"
             maxlength="60"
             autocomplete="name"
           />
@@ -105,7 +99,7 @@
 
         <!-- Score History -->
         <div class="history-section" id="history-section">
-          <h3 class="section-title">📊 ผลการทดสอบล่าสุด</h3>
+          <h3 class="section-title">ผลการทดสอบล่าสุด</h3>
           <div class="history-cards" id="history-cards">
             <!-- Injected by JS -->
           </div>
@@ -116,7 +110,7 @@
           <button class="btn-ghost-sm" id="btn-reset">
             🗑️ ล้างข้อมูลทั้งหมด
           </button>
-          <span class="version-tag">v1.0 • 10 ข้อ</span>
+          <span class="version-tag">version 1.0.0</span>
         </div>
       </main>
     </div>
