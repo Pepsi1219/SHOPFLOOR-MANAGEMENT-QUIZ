@@ -1122,30 +1122,39 @@ async function generateAndShowCertificate(data) {
   }
 
   try {
-    // 1. รอให้ Font และทรัพยากรหน้าเว็บพร้อม
-    await document.fonts.ready;
+    // 1. ดึง Element ที่เกี่ยวข้องทั้งหมด
+    const overlay = document.getElementById('modal-overlay');
+    const dashContent = document.getElementById('dashboard-content');
+    const certContent = document.getElementById('modal-body-content');
+    const footer = document.getElementById('modal-footer-actions');
+    const title = document.getElementById('modal-title-text');
 
-    // 2. เรียกฟังก์ชันวาด (แนะนำให้ปรับ drawCertificate ให้คืนค่าเป็น Promise ถ้ามีการใช้รูปภาพ)
-    // ในที่นี้เราจะรันมัน และเผื่อเวลาให้ Browser ประมวลผลเล็กน้อย
+    // 2. 🔄 จัดระเบียบ Modal: ปิด Dashboard และเปิดส่วนใบเซอร์ + ปุ่มกด
+    if (title) title.innerText = '🖼️ ตัวอย่างภาพผลคะแนน';
+    if (dashContent) dashContent.style.display = 'none';
+    if (certContent) certContent.style.display = 'block';
+    if (footer) footer.style.display = 'flex'; // ✅ บังคับให้ปุ่มดาวน์โหลดแสดงผล
+
+    // 3. รอให้ทรัพยากรพร้อมและวาด Canvas
+    await document.fonts.ready;
     await new Promise(resolve => {
-      drawCertificate(data);
-      setTimeout(resolve, 300); // ให้เวลา Canvas วาด Pixel ลงหน่วยความจำ
+      drawCertificate(data); // มั่นใจว่า drawCertificate วาดลง result-canvas
+      setTimeout(resolve, 300); 
     });
 
-    // 3. แสดง Modal Overlay
-    const overlay = document.getElementById('modal-overlay');
+    // 4. แสดง Modal Overlay (ระบบเดิมของคุณ)
     if (overlay) {
-      overlay.style.display = 'flex'; // มั่นใจว่ามันจะปรากฏตัว
+      overlay.style.display = 'flex';
       setTimeout(() => {
         overlay.classList.add('open');
         overlay.setAttribute('aria-hidden', 'false');
       }, 10);
       
-      // เลื่อนขึ้นไปบนสุดของ Modal เพื่อให้เห็นรูปชัดเจน
       overlay.scrollTop = 0;
+      document.body.style.overflow = 'hidden'; // ล็อกพื้นหลังไม่ให้เลื่อน
     }
 
-    if (typeof showToast === 'function') showToast('✅ สร้างภาพสำเร็จ! กรุณากดค้างที่รูปเพื่อบันทึก');
+    if (typeof showToast === 'function') showToast('✅ สร้างใบรับรองสำเร็จ!');
 
   } catch (e) {
     console.error("Certificate Generation Error:", e);
@@ -1169,7 +1178,7 @@ function drawCertificate(data) {
   // 1. จัดการความคมชัด (Device Pixel Ratio)
   const dpr = window.devicePixelRatio || 1;
   const W = 800;
-  const H = 1100;
+  const H = 1000;
   
   canvas.width = W * dpr;
   canvas.height = H * dpr;
@@ -1593,6 +1602,8 @@ async function init() {
   document.addEventListener('touchstart', (e) => {
     if (e.touches.length > 1) e.preventDefault();
   }, { passive: false });
+
+   setupDashboardBtn();
 }
 /** 2. จัดการเหตุการณ์ในหน้าหลัก (Home) */
 async function bindHomeEvents() {
@@ -1654,21 +1665,48 @@ async function bindHomeEvents() {
   setupBtn('btn-theme', () => toggleTheme());
 
   // ปุ่มลบข้อมูล (Reset)
-  setupBtn('btn-reset', async () => {
-    if (confirm('⚠️ ยืนยันการลบข้อมูลประวัติการสอบของคุณ?')) {
-      try {
-        if (state.name) {
-          // อ้างอิงชื่อคอลเลกชันให้ถูกต้องตามที่เราตั้งค่าใน Section 2
-          await db.collection("results").doc(`${state.name}_pre`).delete();
-          await db.collection("results").doc(`${state.name}_post`).delete();
+  const btnReset = document.getElementById('btn-reset');
+if (btnReset) {
+  btnReset.onclick = async () => {
+    // 1. ถามรหัสผ่าน
+    const password = prompt("🔐 กรุณาใส่รหัสผ่านผู้ดูแลระบบเพื่อล้างข้อมูล:");
+
+    // 2. ตรวจสอบรหัสผ่าน
+    if (password === null) return; // กดยกเลิก
+    
+    if (password === "Admin1234") {
+      // 3. ถ้าผ่าน ให้ถามยืนยันอีกครั้ง (กันพลาด)
+      const confirmReset = confirm("⚠️ คุณแน่ใจใช่ไหมที่จะล้างข้อมูลพนักงานและคะแนนทั้งหมดในเครื่องนี้? (ข้อมูลใน Firebase จะไม่ถูกลบ)");
+      
+      if (confirmReset) {
+        try {
+          // ล้าง Local Storage
+          localStorage.clear();
+          
+          // ล้าง State ในโปรแกรม
+          if (typeof state !== 'undefined') {
+            state.name = "";
+            state.preScore = null;
+            state.postScore = null;
+          }
+
+          showToast("🗑️ ล้างข้อมูลสำเร็จ! กำลังรีโหลดหน้าเว็บ...");
+          
+          // รีโหลดหน้าใหม่เพื่อให้แอปกลับไปเริ่มใหม่
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+
+        } catch (e) {
+          showToast("❌ เกิดข้อผิดพลาดในการล้างข้อมูล");
         }
-        localStorage.clear();
-        window.location.reload();
-      } catch (err) {
-        showToast('❌ ไม่สามารถลบข้อมูลได้');
       }
+    } else {
+      // 4. ถ้ารหัสผิด
+      alert("❌ รหัสผ่านไม่ถูกต้อง! คุณไม่มีสิทธิ์ล้างข้อมูล");
     }
-  });
+  };
+}
 
   // จัดการสถานะ Visual ของปุ่ม
   const updateUI = (el, hasData) => {
@@ -1703,3 +1741,64 @@ async function bindHomeEvents() {
 
 // เริ่มการทำงานทันที
 init();
+
+// ฟังก์ชันดึงข้อมูลทั้งหมดมาโชว์ใน Dashboard
+async function openDashboard() {
+  const overlay = document.getElementById('modal-overlay');
+  const dashContent = document.getElementById('dashboard-content');
+  const certContent = document.getElementById('modal-body-content');
+  const footer = document.getElementById('modal-footer-actions');
+  const title = document.getElementById('modal-title-text');
+  const tableBody = document.getElementById('dashboard-table-body');
+
+  if (!overlay || !tableBody) return;
+
+  // 1. ตั้งค่าหัวข้อและสลับหน้าจอภายใน
+  if (title) title.innerText = '📊 สรุปคะแนนทั้งหมด';
+  if (dashContent) dashContent.style.display = 'block';
+  if (certContent) certContent.style.display = 'none';
+  if (footer) footer.style.display = 'none'; // ซ่อนปุ่มดาวน์โหลดตอนดูตาราง
+
+  // 2. แสดงสถานะโหลดข้อมูล
+  tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">🔄 กำลังโหลด...</td></tr>';
+
+  // 3. เปิด Modal
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.classList.add('open'), 10);
+  overlay.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const snapshot = await db.collection("results").get();
+    const userGroups = {};
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const name = data.name || "ไม่ระบุชื่อ";
+      if (!userGroups[name]) userGroups[name] = { pre: '-', post: '-' };
+      userGroups[name][data.mode] = `${data.score}/${data.total}`;
+    });
+
+    tableBody.innerHTML = '';
+    Object.keys(userGroups).forEach(name => {
+      tableBody.innerHTML += `
+        <tr style="border-bottom:1px solid rgba(0,0,0,0.1);">
+          <td style="padding:12px;">${name}</td>
+          <td style="padding:12px; text-align:center;">${userGroups[name].pre}</td>
+          <td style="padding:12px; text-align:center;">${userGroups[name].post}</td>
+        </tr>`;
+    });
+  } catch (e) {
+    tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red;">❌ โหลดข้อมูลไม่สำเร็จ</td></tr>';
+  }
+}
+
+// ผูกปุ่มในฟังก์ชัน bindHomeEvents หรือ init
+function setupDashboardBtn() {
+  const btn = document.getElementById('btn-dashboard');
+  if (btn) {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      openDashboard();
+    };
+  }
+}
