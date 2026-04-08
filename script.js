@@ -1484,34 +1484,41 @@ function downloadCertificate() {
   }
 
   try {
-    const dataURL = canvas.toDataURL('image/png');
-    
-    // ตรวจสอบว่าเป็นมือถือหรือไม่
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // 1. สร้างชื่อไฟล์
+    const fileName = typeof buildFilename === 'function' 
+      ? buildFilename() 
+      : `Result_${state.name || 'User'}_${Date.now()}.png`;
 
-    if (isMobile) {
-      // 📱 สำหรับมือถือ: ให้แสดงรูปใน Tag <img> เพื่อให้พนักงานกดค้างเพื่อบันทึก
-      const modalImg = document.getElementById('modal-result-img'); 
-      if (modalImg) {
-        modalImg.src = dataURL;
-        showToast('📸 กดค้างที่รูปภาพเพื่อบันทึก (Save Image)');
-      } else {
-        // กรณีไม่มีแท็ก img ให้เปิดรูปในหน้าใหม่เป็นทางเลือกสุดท้าย
-        const newTab = window.open();
-        newTab.document.write(`<img src="${dataURL}" style="width:100%;">`);
-        showToast('💡 กรุณาบันทึกรูปจากหน้าต่างที่เปิดขึ้นใหม่');
+    // 2. แปลง Canvas เป็น Blob (วิธีนี้เนียนกว่า DataURL สำหรับ iOS)
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        showToast('❌ ไม่สามารถสร้างไฟล์ภาพได้');
+        return;
       }
-    } else {
-      // 💻 สำหรับคอมพิวเตอร์: ใช้คำสั่ง Download ปกติ
-      const link = document.createElement('a');
-      link.download = typeof buildFilename === 'function' ? buildFilename() : `Result_${Date.now()}.png`;
-      link.href = dataURL;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+
+      // 3. สร้าง URL ชั่วคราวจาก Blob
+      const url = window.URL.createObjectURL(blob);
       
-      showToast('✅ บันทึกภาพลงคอมพิวเตอร์สำเร็จ!');
-    }
+      // 4. สร้าง Link ล่องหนเพื่อสั่งดาวน์โหลด
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+
+      // 5. สำหรับ iOS/Safari ต้องเพิ่ม Link เข้าไปใน Document ก่อนคลิก
+      document.body.appendChild(link);
+      
+      // 6. สั่งดาวน์โหลด
+      link.click();
+
+      // 7. เคลียร์หน่วยความจำและลบ Link ออก
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 150);
+
+      showToast('✅ กำลังเริ่มการดาวน์โหลด...');
+      
+    }, 'image/png');
 
   } catch (e) {
     showToast('❌ ระบบบันทึกภาพขัดข้อง');
