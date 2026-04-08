@@ -323,9 +323,12 @@ function saveLS(key, value) {
 function loadLS(key) {
   try {
     const raw = localStorage.getItem('sfmq_' + key);
-    return raw ? JSON.parse(raw) : null;
+    // ตรวจสอบว่ามีข้อมูลจริงไหม และป้องกันการ Parse พลาด
+    if (!raw || raw === "undefined") return null;
+    return JSON.parse(raw);
   } catch (e) {
-    return null;
+    console.error('LocalStorage Access Denied:', e);
+    return null; // ถ้าเป็น Private Mode หรือ Error ให้คืนค่า null เพื่อให้แอปไปต่อได้
   }
 }
 
@@ -447,53 +450,77 @@ function buildHistoryCard(label, mode, data) {
 }
 
 function bindHomeEvents() {
-  // ปุ่ม Pre-test
+  // 1. ดึงข้อมูลผลสอบเก่า (ใส่ try-catch ภายใน loadLS ไว้แล้วจะปลอดภัยมาก)
+  const preData = loadLS('result_pre');
+  const postData = loadLS('result_post');
+
+  // ฟังก์ชันช่วยจัดการ Click Event ให้เสถียรบน iPhone
+  const handleBtnClick = (id, callback) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    
+    // ล้าง Event เก่าเพื่อป้องกันการทำงานซ้อนกัน
+    el.replaceWith(el.cloneNode(true));
+    const newEl = document.getElementById(id);
+    
+    // ใช้ click แต่รองรับ touch behavior ของ iOS ได้ดีขึ้น
+    newEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      callback();
+    });
+  };
+
+  // 2. จัดการปุ่ม Pre-test
+  handleBtnClick('btn-pre', () => {
+    // เช็คข้อมูลล่าสุดก่อนทำงาน
+    const currentPre = loadLS('result_pre');
+    if (currentPre) {
+      showToast('⚠️ คุณได้ทำการทดสอบ Pre-test เรียบร้อยแล้ว');
+    } else {
+      startQuiz('pre');
+    }
+  });
+
+  // 3. จัดการปุ่ม Post-test
+  handleBtnClick('btn-post', () => {
+    // เช็คข้อมูลล่าสุดก่อนทำงาน
+    const currentPost = loadLS('result_post');
+    if (currentPost) {
+      showToast('⚠️ คุณได้ทำการทดสอบ Post-test เรียบร้อยแล้ว');
+    } else {
+      startQuiz('post');
+    }
+  });
+
+  // ตั้งค่าสถานะปุ่มตอนโหลดหน้าแรก (สีจาง/สีสด)
   const btnPre = document.getElementById('btn-pre');
-  if (btnPre) {
-    btnPre.onclick = () => startQuiz('pre');
-  }
-
-  // ปุ่ม Post-test
   const btnPost = document.getElementById('btn-post');
-  if (btnPost) {
-    btnPost.onclick = () => startQuiz('post');
+  
+  if (btnPre && preData) {
+    btnPre.style.opacity = "0.5";
+    btnPre.style.cursor = "not-allowed";
+  }
+  if (btnPost && postData) {
+    btnPost.style.opacity = "0.5";
+    btnPost.style.cursor = "not-allowed";
   }
 
-  // Theme toggle — home
-  const btnTheme = document.getElementById('btn-theme');
-  if (btnTheme) {
-    btnTheme.onclick = toggleTheme;
-  }
+  // 4. Theme toggle
+  handleBtnClick('btn-theme', toggleTheme);
 
-  // Reset ข้อมูล
- const btnReset = document.getElementById('btn-reset');
-  if (btnReset) {
-    btnReset.onclick = () => {
-      if (confirm('⚠️ คุณต้องการลบผลการทดสอบทั้งหมดใช่หรือไม่?')) {
-        // ล้างข้อมูลใน LocalStorage
-        localStorage.removeItem('sfmq_result_pre');
-        localStorage.removeItem('sfmq_result_post');
-        localStorage.removeItem('sfmq_name');
+  // 5. Reset ข้อมูล
+  handleBtnClick('btn-reset', () => {
+    if (confirm('⚠️ คุณต้องการลบผลการทดสอบทั้งหมดใช่หรือไม่?')) {
+      localStorage.removeItem('sfmq_result_pre');
+      localStorage.removeItem('sfmq_result_post');
+      localStorage.removeItem('sfmq_name');
 
-        // --- เพิ่มส่วนนี้: คืนค่าสีและความสดให้ปุ่มทันที ---
-        if (btnPre) {
-          btnPre.style.opacity = "1";
-          btnPre.style.cursor = "pointer";
-        }
-        if (btnPost) {
-          btnPost.style.opacity = "1";
-          btnPost.style.cursor = "pointer";
-        }
-        // -------------------------------------------
+      // วิธีที่เสถียรที่สุดสำหรับ iPhone คือการรีโหลดหน้าเพื่อล้าง State ทั้งหมด
+      window.location.reload();
+    }
+  });
 
-        // อัพเดทหน้าจอใหม่
-        renderHome(); 
-        showToast('🗑️ ล้างข้อมูลเรียบร้อยแล้ว');
-      }
-    };
-  }
-
-  // Name input — บันทึกอัตโนมัติ
+  // 6. Name input
   const inputName = document.getElementById('input-name');
   if (inputName) {
     inputName.oninput = () => {
@@ -502,7 +529,6 @@ function bindHomeEvents() {
     };
   }
 }
-
 /* =====================================================
    SECTION 5: QUIZ LOGIC
    ===================================================== */
@@ -898,20 +924,22 @@ function drawCertificate(data) {
   const mutedColor  = isDark ? '#9090c0' : '#6060a0';
   const accentColor = '#0071E3';
 
-  // Factory icon
-  ctx.font = '42px Sarabun, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('🏭', W / 2, 110);
+
 
   // App Title
-  ctx.font = 'bold 22px Kanit, sans-serif';
+  ctx.font = 'bold 52px Kanit, sans-serif';
+  ctx.textAlign = 'center';
   ctx.fillStyle = textColor;
-  ctx.fillText('Shopfloor Management Quiz', W / 2, 152);
+  ctx.fillText('Shopfloor Management', W / 2, 115);
+  ctx.shadowColor = 'rgba(0,0,0,0.3)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
 
   // Subtitle
-  ctx.font = '500 14px Sarabun, sans-serif';
+  ctx.font = '500 24px Sarabun, sans-serif';
   ctx.fillStyle = mutedColor;
-  ctx.fillText('ใบรับรองผลการทดสอบความรู้การจัดการหน้างาน', W / 2, 174);
+  ctx.fillText('ใบรับรองผลการทดสอบความรู้', W / 2, 174);
 
   /* ── Divider ────────────────────────────────────── */
   drawDivider(ctx, cardX + 40, 190, cardW - 80, isDark);
