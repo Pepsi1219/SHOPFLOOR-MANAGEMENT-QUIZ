@@ -466,14 +466,28 @@ function bindHomeEvents() {
   }
 
   // Reset ข้อมูล
-  const btnReset = document.getElementById('btn-reset');
+ const btnReset = document.getElementById('btn-reset');
   if (btnReset) {
     btnReset.onclick = () => {
       if (confirm('⚠️ คุณต้องการลบผลการทดสอบทั้งหมดใช่หรือไม่?')) {
+        // ล้างข้อมูลใน LocalStorage
         localStorage.removeItem('sfmq_result_pre');
         localStorage.removeItem('sfmq_result_post');
         localStorage.removeItem('sfmq_name');
-        renderHistoryCards();
+
+        // --- เพิ่มส่วนนี้: คืนค่าสีและความสดให้ปุ่มทันที ---
+        if (btnPre) {
+          btnPre.style.opacity = "1";
+          btnPre.style.cursor = "pointer";
+        }
+        if (btnPost) {
+          btnPost.style.opacity = "1";
+          btnPost.style.cursor = "pointer";
+        }
+        // -------------------------------------------
+
+        // อัพเดทหน้าจอใหม่
+        renderHome(); 
         showToast('🗑️ ล้างข้อมูลเรียบร้อยแล้ว');
       }
     };
@@ -779,6 +793,7 @@ function renderResult(data) {
         </button>
       </div>
     </div>
+    
 
     <!-- Detail Section -->
     <div class="detail-section">
@@ -789,7 +804,17 @@ function renderResult(data) {
 
   // Bind events
   document.getElementById('btn-capture').onclick = () => generateAndShowCertificate(data);
-  document.getElementById('btn-retake').onclick  = () => startQuiz(state.mode);
+  document.getElementById('btn-retake').onclick = () => {
+    const password = prompt("⚠️ กรุณาใส่รหัสผ่านเพื่อเริ่มการทดสอบใหม่:");
+    
+    if (password === "QCO2026") {
+      // ถ้าถูก ให้เริ่มควิซใหม่ตามโหมดเดิม
+      startQuiz(state.mode);
+    } else if (password !== null) {
+      // ถ้าผิด (และไม่ได้กด Cancel)
+      alert("❌ รหัสผ่านไม่ถูกต้อง! ไม่สามารถทดสอบใหม่ได้");
+    }
+  };
   document.getElementById('btn-go-home').onclick = () => { goScreen('home'); renderHome(); };
 
   // Result theme + home buttons in header
@@ -1162,3 +1187,67 @@ function init() {
 
 // เริ่มต้นแอพ
 init();
+
+// ไม่ให้ทำแบบทดสอบซ้ำ Pretest
+function bindHomeEvents() {
+  // 1. ดึงข้อมูลผลสอบเก่าจาก LocalStorage
+  const preData = loadLS('result_pre');
+  const postData = loadLS('result_post');
+
+  // 2. จัดการปุ่ม Pre-test
+  const btnPre = document.getElementById('btn-pre');
+  if (btnPre) {
+    if (preData) {
+      // 🚫 ล็อกปุ่มถ้าสอบแล้ว
+      btnPre.style.opacity = "0.5";
+      btnPre.style.cursor = "not-allowed";
+      btnPre.onclick = () => showToast('⚠️ คุณได้ทำการทดสอบ Pre-test เรียบร้อยแล้ว');
+    } else {
+      // ✅ เปิดให้สอบถ้ายังไม่มีข้อมูล
+      btnPre.onclick = () => startQuiz('pre');
+    }
+  }
+
+  // 3. จัดการปุ่ม Post-test
+  const btnPost = document.getElementById('btn-post');
+  if (btnPost) {
+    if (postData) {
+      // 🚫 ล็อกปุ่มถ้าสอบแล้ว
+      btnPost.style.opacity = "0.5";
+      btnPost.style.cursor = "not-allowed";
+      btnPost.onclick = () => showToast('⚠️ คุณได้ทำการทดสอบ Post-test เรียบร้อยแล้ว');
+    } else {
+      // ✅ เปิดให้สอบถ้ายังไม่มีข้อมูล
+      btnPost.onclick = () => startQuiz('post');
+    }
+  }
+
+  // 4. ปุ่ม Theme Toggle
+  const btnTheme = document.getElementById('btn-theme');
+  if (btnTheme) {
+    btnTheme.onclick = toggleTheme;
+  }
+
+  // 5. ปุ่ม Reset ข้อมูล (เมื่อล้างข้อมูล ปุ่มข้างบนจะกลับมาปลดล็อกอัตโนมัติ)
+  const btnReset = document.getElementById('btn-reset');
+  if (btnReset) {
+    btnReset.onclick = () => {
+      if (confirm('⚠️ คุณต้องการลบผลการทดสอบทั้งหมดใช่หรือไม่?')) {
+        localStorage.removeItem('sfmq_result_pre');
+        localStorage.removeItem('sfmq_result_post');
+        localStorage.removeItem('sfmq_name');
+        renderHome(); // เรียก renderHome ใหม่เพื่ออัพเดทสถานะปุ่มทันที
+        showToast('🗑️ ล้างข้อมูลเรียบร้อยแล้ว');
+      }
+    };
+  }
+
+  // 6. Name input — บันทึกอัตโนมัติ
+  const inputName = document.getElementById('input-name');
+  if (inputName) {
+    inputName.oninput = () => {
+      state.name = inputName.value.trim();
+      saveLS('name', state.name);
+    };
+  }
+}
