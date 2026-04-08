@@ -1474,3 +1474,18 @@ body {
 @media print {
   .bg-scene, .top-bar, .quiz-header { display: none !important; }
 }
+
+/* บังคับให้ span ภายในปุ่มไม่ขวางการคลิก */
+.btn-text, 
+.btn-label, 
+.btn-sub,
+.btn-icon {
+  pointer-events: none; 
+}
+
+/* ทำให้ปุ่มตอบสนองทันทีที่แตะ */
+#btn-pre, #btn-post, #btn-reset {
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
