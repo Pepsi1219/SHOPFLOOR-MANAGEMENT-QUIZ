@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Shopfloor Management Quiz — แบบทดสอบการจัดการหน้างาน Pre/Post Test" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#0071E3" />
+  <title>Shopfloor Management Quiz</title>
+
+  <!-- Google Fonts: Kanit (heading) + Sarabun (body) — ทั้งคู่รองรับ Thai -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- App root — ทุกหน้าถูก render โดย JavaScript -->
+  <div id="app">
+
+    <!-- ===== BACKGROUND ORBS (Liquid Glass Ambient) ===== -->
+    <div class="bg-scene" aria-hidden="true">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
+    <!-- ===== LOADING SCREEN ===== -->
+    <div class="screen active" id="screen-loading">
+      <div class="loading-center">
+        <div class="loading-icon-wrap">
+          <span class="loading-emoji">🏭</span>
+          <div class="loading-ring"></div>
+        </div>
+        <h1 class="loading-title">Shopfloor<br/><span>Management Quiz</span></h1>
+        <div class="loading-bar-track">
+          <div class="loading-bar-fill" id="loading-bar-fill"></div>
+        </div>
+        <p class="loading-sub">กำลังโหลด...</p>
+      </div>
+    </div>
+
+    <!-- ===== HOME SCREEN ===== -->
+    <div class="screen" id="screen-home">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="top-bar-inner">
+          <span class="app-logo">🏭</span>
+          <span class="app-name">Shopfloor Quiz</span>
+          <div class="top-actions">
+            <button class="icon-btn" id="btn-theme" title="สลับ Light/Dark mode" aria-label="Toggle Dark Mode">
+              <span class="theme-icon">☀️</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Home Content -->
+      <main class="home-content">
+        <!-- Hero Card -->
+        <div class="hero-card glass-card">
+          <div class="hero-badge">
+            <span>📋</span> แบบทดสอบการจัดการหน้างาน
+          </div>
+          <h2 class="hero-title">ทดสอบความรู้<br/><span class="gradient-text">Shopfloor Management</span></h2>
+          <p class="hero-desc">10 ข้อ • Multiple Choice • รับรองด้วยภาพถ่ายผลคะแนน</p>
+        </div>
+
+        <!-- Name Input -->
+        <div class="name-section glass-card">
+          <label class="input-label" for="input-name">
+            <span>👤</span> ชื่อ-นามสกุลผู้สอบ
+          </label>
+          <input
+            type="text"
+            id="input-name"
+            class="name-input"
+            placeholder="กรอกชื่อของคุณ (ไม่บังคับ)"
+            maxlength="60"
+            autocomplete="name"
+          />
+        </div>
+
+        <!-- Test Buttons -->
+        <div class="test-buttons">
+          <button class="btn btn-pre" id="btn-pre">
+            <span class="btn-icon">📝</span>
+            <div class="btn-text">
+              <span class="btn-label">Pre-test</span>
+              <span class="btn-sub">ทดสอบก่อนอบรม</span>
+            </div>
+            <span class="btn-arrow">→</span>
+          </button>
+          <button class="btn btn-post" id="btn-post">
+            <span class="btn-icon">🎯</span>
+            <div class="btn-text">
+              <span class="btn-label">Post-test</span>
+              <span class="btn-sub">ทดสอบหลังอบรม</span>
+            </div>
+            <span class="btn-arrow">→</span>
+          </button>
+        </div>
+
+        <!-- Score History -->
+        <div class="history-section" id="history-section">
+          <h3 class="section-title">📊 ผลการทดสอบล่าสุด</h3>
+          <div class="history-cards" id="history-cards">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Reset -->
+        <div class="footer-actions">
+          <button class="btn-ghost-sm" id="btn-reset">
+            🗑️ ล้างข้อมูลทั้งหมด
+          </button>
+          <span class="version-tag">v1.0 • 10 ข้อ</span>
+        </div>
+      </main>
+    </div>
+
+    <!-- ===== QUIZ SCREEN ===== -->
+    <div class="screen" id="screen-quiz">
+      <!-- Quiz Header -->
+      <header class="quiz-header">
+        <button class="icon-btn" id="btn-quiz-home" title="กลับหน้าหลัก" aria-label="Home">
+          <span>🏠</span>
+        </button>
+        <div class="quiz-header-center">
+          <span class="mode-badge" id="mode-badge">Pre-test</span>
+          <span class="quiz-progress-text" id="quiz-progress-text">ข้อ 1 / 10</span>
+        </div>
+        <button class="icon-btn" id="btn-quiz-theme" aria-label="Toggle Theme">
+          <span class="theme-icon">☀️</span>
+        </button>
+      </header>
+
+      <!-- Progress Bar -->
+      <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+
+      <!-- Question Area -->
+      <main class="quiz-main" id="quiz-main">
+        <!-- Injected by JS per question -->
+      </main>
+    </div>
+
+    <!-- ===== RESULT SCREEN ===== -->
+    <div class="screen" id="screen-result">
+      <!-- Result Header -->
+      <header class="quiz-header">
+        <button class="icon-btn" id="btn-result-home" aria-label="Home">
+          <span>🏠</span>
+        </button>
+        <div class="quiz-header-center">
+          <span class="mode-badge" id="result-mode-badge">Post-test</span>
+          <span class="quiz-progress-text">ผลการทดสอบ</span>
+        </div>
+        <button class="icon-btn" id="btn-result-theme" aria-label="Toggle Theme">
+          <span class="theme-icon">☀️</span>
+        </button>
+      </header>
+
+      <!-- Result Content -->
+      <main class="result-main" id="result-main">
+        <!-- Injected by JS -->
+      </main>
+    </div>
+
+  </div><!-- #app -->
+
+  <!-- ===== MODAL (Preview Image) ===== -->
+  <div class="modal-overlay" id="modal-overlay" aria-hidden="true">
+    <div class="modal-box glass-card">
+      <div class="modal-header">
+        <h3>🖼️ ตัวอย่างภาพผลคะแนน</h3>
+        <button class="icon-btn" id="btn-modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <canvas id="result-canvas" class="result-canvas-preview"></canvas>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost-sm" id="btn-modal-close2">ยกเลิก</button>
+        <button class="btn btn-save" id="btn-download">
+          <span>⬇️</span> ดาวน์โหลด PNG
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
