@@ -1258,14 +1258,19 @@ body {
   to   { opacity: 1; }
 }
 
+/* กล่อง Modal ที่ครอบ cert ทั้งหมด */
 .modal-box {
-  width: 100%;
-  max-width: 520px;
-  max-height: 90dvh;
+  width: 92%;
+  max-width: 500px;
+  height: auto;         /* ให้กล่องสูงเท่าที่เนื้อหามี */
+  max-height: 90vh;     /* แต่ห้ามสูงเกินหน้าจอมือถือ */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden;      /* ตัดส่วนที่เกิน */
+  border-radius: 15px;
   animation: modalIn 0.3s var(--ease);
+  background: var(--background-color, white);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
 @keyframes modalIn {
@@ -1279,6 +1284,7 @@ body {
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-glass);
+  flex-shrink: 0;        /* ห้ามหดตัว */
 }
 
 .modal-header h3 {
@@ -1294,11 +1300,17 @@ body {
   padding: 16px 20px;
   display: flex;
   justify-content: center;
+  -webkit-overflow-scrolling: touch;
 }
 
 .result-canvas-preview {
-  max-width: 100%;
-  border-radius: var(--r-md);
+  width: 100%;          /* กว้างเต็มพื้นที่กล่อง */
+  max-width: 100%;     /* จำกัดความกว้างไว้เพื่อไม่ให้ยาวเกินไป */
+  height: auto !important; /* บังคับให้ความสูงปรับตามสัดส่วนภาพจริง */
+  display: block;
+  margin: 10px auto;    /* จัดกึ่งกลาง */
+  object-fit: contain;  /* ป้องกันการบิดเบี้ยวของภาพ */
+  border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
 
@@ -1306,9 +1318,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
   padding: 14px 20px;
   border-top: 1px solid var(--border-glass);
+  flex-shrink: 0;        /* ห้ามหดตัว */
 }
 
 /* ===== 17. TOAST ===== */
