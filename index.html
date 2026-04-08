@@ -54,6 +54,12 @@
       <header class="top-bar">
         <div class="top-bar-inner">
           <span class="app-name">Shopfloor Management Quiz</span>
+          
+          <div class="top-actions">
+          <button class="icon-btn" id="btn-dashboard" title="ดูสรุปคะแนนทั้งหมด" aria-label="View Dashboard">
+            <span>📊</span>
+          </button>
+            
           <div class="top-actions">
             <button class="icon-btn" id="btn-theme" title="สลับ Light/Dark mode" aria-label="Toggle Dark Mode">
               <span class="theme-icon">☀️</span>
@@ -78,7 +84,7 @@
             type="text"
             id="input-name"
             class="name-input"
-            placeholder="(ไม่บังคับ)"
+            placeholder=""
             maxlength="60"
             autocomplete="name"
           />
@@ -174,17 +180,36 @@
   </div><!-- #app -->
 
   <!-- ===== MODAL (Preview Image) ===== -->
-  <div class="modal-overlay" id="modal-overlay" aria-hidden="true">
-    <div class="modal-box glass-card">
-      <div class="modal-header">
-        <h3>🖼️ ตัวอย่างภาพผลคะแนน</h3>
-        <button class="icon-btn" id="btn-modal-close" aria-label="Close">✕</button>
+  <div class="modal-overlay" id="modal-overlay" aria-hidden="true" style="display:none;">
+    <div class="modal-box glass-card"> <div class="modal-header">
+        <h3 id="modal-title-text">🖼️ ตัวอย่างภาพผลคะแนน</h3>
+        <button class="icon-btn" id="btn-modal-close" onclick="closeModal()" aria-label="Close">✕</button>
       </div>
+
       <div class="modal-body">
-        <canvas id="result-canvas" class="result-canvas-preview"></canvas>
+        <div id="dashboard-content" style="display:none;">
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom:2px solid var(--border-color); text-align:left;">
+                  <th style="padding:10px;">ชื่อพนักงาน</th>
+                  <th style="padding:10px; text-align:center;">Pre-test</th>
+                  <th style="padding:10px; text-align:center;">Post-test</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-table-body">
+                </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="modal-body-content" style="display:none; text-align:center;">
+          <canvas id="result-canvas" class="result-canvas-preview"></canvas>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn-ghost-sm" id="btn-modal-close2">ยกเลิก</button>
+
+      <div class="modal-footer" id="modal-footer-actions">
+        <button class="btn-ghost-sm" onclick="closeModal()">ยกเลิก</button>
         <button class="btn btn-save" id="btn-download">
           <span>⬇️</span> ดาวน์โหลด PNG
         </button>
@@ -192,7 +217,6 @@
     </div>
   </div>
 
-  <!-- ===== TOAST ===== -->
   <div class="toast" id="toast" aria-live="polite"></div>
 
   <script src="script.js"></script>
