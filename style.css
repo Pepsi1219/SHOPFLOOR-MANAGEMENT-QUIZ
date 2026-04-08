@@ -359,6 +359,9 @@ body {
   flex-shrink: 0;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color: transparent; 
+  touch-action: manipulation;           
+  user-select: none;
 }
 
 .icon-btn:hover {
@@ -368,6 +371,7 @@ body {
 
 .icon-btn:active {
   transform: scale(0.95);
+  background: var(--bg-card-hover); /* บังคับเปลี่ยนสีทันทีที่นิ้วแตะ */
 }
 
 /* ===== 9. MODE BADGE ===== */
